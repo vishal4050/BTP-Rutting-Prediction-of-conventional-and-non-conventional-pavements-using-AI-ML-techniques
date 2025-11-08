@@ -1,0 +1,36 @@
+{
+  "name": "offline-ml-app",
+  "version": "1.0.0",
+  "description": "Offline React + Node + ML App",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "// NOTE 1": "Run your React app's dev server first on localhost:3000",
+    "// NOTE 2": "Then run 'npm start' in this directory to launch Electron."
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "dependencies": {
+    "// NOTE 3": "This app uses a Python backend (started in main.js), not tfjs-node.",
+    "// NOTE 4": "electron-builder will package everything together."
+  },
+  "build": {
+    "appId": "com.you.offline-ml-app",
+    "files": [
+      "main.js",
+      "preload.js",
+      "build/**/*",
+      "python-server/**/*"
+    ],
+    "directories": {
+      "buildResources": "assets",
+      "output": "dist"
+    }
+  }
+}

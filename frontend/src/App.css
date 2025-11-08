@@ -1,0 +1,91 @@
+.logo {
+  width: 120px;          /* logo width */
+  height: auto;          /* maintain aspect ratio */
+  margin-bottom: 10px;   /* space below logo */
+  border-radius: 10px;   /* smooth corners */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* subtle shadow */
+  transition: transform 0.3s ease;           /* hover animation */
+}
+
+.logo:hover {
+  transform: scale(1.05);
+}
+
+.App-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.App {
+    text-align: center;
+    font-family: sans-serif;
+    color: #333;
+}
+
+.App-header {
+    background-color: #282c34;
+    padding: 20px;
+    color: white;
+    margin-bottom: 30px;
+}
+
+.uploader-container {
+    margin: 20px auto;
+    padding: 20px;
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    max-width: 600px;
+}
+
+.uploader-container input {
+    margin-bottom: 15px;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #61dafb;
+    border: none;
+    border-radius: 5px;
+    color: #282c34;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.results-container {
+    max-width: 90%;
+    margin: 40px auto;
+}
+
+.error-message {
+    color: red;
+    font-weight: bold;
+}
+.App-footer {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  text-align: center;
+  font-size: 0.9rem;
+  padding: 15px 0;
+  margin-top: 40px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.App-footer strong {
+  color: #4caf50; /* Green accent for developer names */
+}
+
+@media (max-width: 600px) {
+  .App-footer {
+    font-size: 0.8rem;
+    padding: 10px 0;
+  }
+}

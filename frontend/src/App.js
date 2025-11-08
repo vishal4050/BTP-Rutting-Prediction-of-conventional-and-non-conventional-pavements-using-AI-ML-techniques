@@ -47,10 +47,12 @@ function App() {
 
     return (
         <div className="App">
-            <header className="App-header">
-                <h1>🛣️ Pavement Rutting Prediction</h1>
-                <p>Upload images to predict the severity of rutting.</p>
-            </header>
+           <header className="App-header">
+    <img src="/IITI.png" alt="IIT Indore Logo" className="logo" />
+    <h1>🛣️ Pavement Rutting Prediction</h1>
+    <p>Upload images to predict the severity of rutting.</p>
+     </header>
+
             <main>
                 <div className="uploader-container">
                     <input type="file" multiple onChange={handleFileChange} accept="image/*" />
@@ -68,7 +70,12 @@ function App() {
                     </div>
                 )}
             </main>
+            <footer className="App-footer">
+  <p>© 2025 All Rights Reserved | Developed by <strong>Vishal</strong> & <strong>Dr. Ramu Baadiga</strong></p>
+</footer>
+
         </div>
+        
     );
 }
 

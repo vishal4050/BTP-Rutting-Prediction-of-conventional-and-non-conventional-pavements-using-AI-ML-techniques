@@ -134,4 +134,3 @@ async def predict_rutting(files: List[UploadFile] = File(...)):
 
 # To run the app, use the command:
 # uvicorn main:app --reload
-
