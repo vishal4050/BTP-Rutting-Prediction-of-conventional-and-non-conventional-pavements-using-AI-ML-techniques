@@ -1,91 +1,227 @@
+/* ======= GENERAL ======= */
+.App {
+  text-align: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #000000; /* All text black */
+  background: #f7faff; /* Light bluish-white background */
+  min-height: 100vh;
+}
+
+/* ======= HEADER ======= */
+.App-header {
+  background: rgba(200, 230, 255, 0.8); /* soft transparent blue-white */
+  backdrop-filter: blur(6px); /* frosted glass effect */
+  -webkit-backdrop-filter: blur(6px);
+  color: #000000;
+  padding: 25px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-bottom: 2px solid rgba(100, 181, 246, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
 .logo {
-  width: 120px;          /* logo width */
-  height: auto;          /* maintain aspect ratio */
-  margin-bottom: 10px;   /* space below logo */
-  border-radius: 10px;   /* smooth corners */
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15); /* subtle shadow */
-  transition: transform 0.3s ease;           /* hover animation */
+  width: 120px;
+  height: auto;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
 }
 
 .logo:hover {
   transform: scale(1.05);
 }
 
-.App-header {
+/* ======= UPLOADER ======= */
+.uploader-container {
+  margin: 25px auto;
+  padding: 25px;
+  border: 2px dashed #90caf9;
+  border-radius: 10px;
+  max-width: 600px;
+  background-color: rgba(255, 255, 255, 0.9);
+  color: #000000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* === Native file input visible with original icon === */
+.uploader-container input[type="file"] {
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #000;
+  border-radius: 6px;
+  padding: 6px 10px;
+  border: 1px solid #90caf9;
+  background-color: white;
+  width: 100%;
+  max-width: 400px;
+  box-sizing: border-box;
+  outline-offset: 2px;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.uploader-container input[type="file"]:focus {
+  border-color: #42a5f5;
+  box-shadow: 0 0 10px rgba(66, 165, 245, 0.5);
+}
+
+/* === Selected files count text === */
+.selected-files-count {
+  margin-top: 6px;
+  font-weight: 600;
+  color: #000;
+  font-size: 14px;
+  user-select: none;
+}
+
+/* === Location Input Boxes === */
+.location-inputs {
+  display: flex;
   justify-content: center;
-  text-align: center;
-  margin-bottom: 20px;
+  gap: 15px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 600px;
 }
 
-.App {
-    text-align: center;
-    font-family: sans-serif;
-    color: #333;
+.location-inputs input {
+  padding: 12px 18px;
+  border: 1px solid #90caf9;
+  border-radius: 8px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.8);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  font-size: 15px;
+  width: 220px;
+  transition: all 0.3s ease;
+  color: #000;
 }
 
-.App-header {
-    background-color: #282c34;
-    padding: 20px;
-    color: white;
-    margin-bottom: 30px;
+.location-inputs input:focus {
+  border-color: #42a5f5;
+  box-shadow: 0 0 10px rgba(66, 165, 245, 0.4);
+  background: white;
 }
 
-.uploader-container {
-    margin: 20px auto;
-    padding: 20px;
-    border: 2px dashed #ccc;
-    border-radius: 10px;
-    max-width: 600px;
+/* === Predict Button === */
+.uploader-container button {
+  background: linear-gradient(135deg, #64b5f6, #42a5f5);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 28px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: fit-content;
+  margin-top: 10px;
 }
 
-.uploader-container input {
-    margin-bottom: 15px;
+.uploader-container button:hover {
+  background: linear-gradient(135deg, #42a5f5, #1e88e5);
+  transform: translateY(-2px);
 }
 
-button {
-    padding: 10px 20px;
-    font-size: 16px;
-    cursor: pointer;
-    background-color: #61dafb;
-    border: none;
-    border-radius: 5px;
-    color: #282c34;
+.uploader-container button:disabled {
+  background-color: #cfd8dc;
+  cursor: not-allowed;
+  color: #000000;
 }
 
-button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-}
-
+/* ======= RESULTS ======= */
 .results-container {
-    max-width: 90%;
-    margin: 40px auto;
+  max-width: 90%;
+  margin: 40px auto;
+  color: #000000;
 }
 
 .error-message {
-    color: red;
-    font-weight: bold;
+  color: red;
+  font-weight: bold;
 }
+
+/* ======= FOOTER ======= */
 .App-footer {
-  background-color: var(--bg-color);
-  color: var(--text-color);
+  background: rgba(200, 230, 255, 0.85); /* translucent footer */
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #000000;
   text-align: center;
-  font-size: 0.9rem;
-  padding: 15px 0;
-  margin-top: 40px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  font-size: 0.95rem;
+  padding: 20px 0;
+  margin-top: 50px;
+  border-top: 2px solid rgba(100, 181, 246, 0.4);
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.App-footer p {
+  margin: 6px 0;
+  color: #000000;
 }
 
 .App-footer strong {
-  color: #4caf50; /* Green accent for developer names */
+  color: #000000;
 }
 
+.App-footer svg {
+  color: white; /* White icons */
+  vertical-align: middle;
+}
+
+/* ======= RESPONSIVE ======= */
 @media (max-width: 600px) {
   .App-footer {
-    font-size: 0.8rem;
-    padding: 10px 0;
+    font-size: 0.85rem;
+    padding: 12px 0;
   }
+
+  .location-inputs {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .location-inputs input {
+    width: 100%;
+    max-width: none;
+  }
+}
+.download-btn {
+  background: linear-gradient(135deg, #64b5f6, #42a5f5);
+  border: none;
+  border-radius: 8px;
+  padding: 12px 28px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+  box-shadow: 0 4px 8px rgba(66, 165, 245, 0.4);
+  width: fit-content;
+}
+
+.download-btn:hover {
+  background: linear-gradient(135deg, #42a5f5, #1e88e5);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(30, 136, 229, 0.6);
+}
+
+.download-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 3px 6px rgba(30, 136, 229, 0.4);
+}
+
+.download-btn:disabled {
+  background-color: #cfd8dc;
+  cursor: not-allowed;
+  color: #666;
+  box-shadow: none;
 }
