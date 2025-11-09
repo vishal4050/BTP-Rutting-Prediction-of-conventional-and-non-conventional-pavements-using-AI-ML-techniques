@@ -1,5 +1,7 @@
 fastapi
-tensorflow>=2.0
 uvicorn
 python-multipart
-Pillow
+tensorflow
+numpy
+pillow
+python-dotenv
