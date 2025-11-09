@@ -18,12 +18,13 @@ function App() {
   const [stream, setStream] = useState(null);
   const [cameraOpen, setCameraOpen] = useState(false);
 
-  // For naming captured images sequentially
+  // Sequential naming for captured images
   const [captureCount, setCaptureCount] = useState(0);
+
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://rutting-api3.onrender.com';
 
   useEffect(() => {
     if (!cameraOpen) {
-      // Stop camera stream when closing
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
         setStream(null);
@@ -34,16 +35,15 @@ function App() {
     async function startCamera() {
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        if (videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-        }
+        if (videoRef.current) videoRef.current.srcObject = mediaStream;
         setStream(mediaStream);
       } catch (err) {
-        console.error("Error accessing webcam: ", err);
+        console.error("Error accessing webcam:", err);
         setError("Could not access the camera. Please check permissions.");
         setCameraOpen(false);
       }
     }
+
     startCamera();
 
     return () => {
@@ -54,11 +54,11 @@ function App() {
   }, [cameraOpen]);
 
   const handleFileChange = (event) => {
-  const filesArray = Array.from(event.target.files);
-  setSelectedFiles(filesArray);  // Replace old images with new selection
-  setPredictionData(null);
-  setError('');
-};
+    const filesArray = Array.from(event.target.files);
+    setSelectedFiles(filesArray);
+    setPredictionData(null);
+    setError('');
+  };
 
   const handleCapture = () => {
     if (!videoRef.current) return;
@@ -73,10 +73,8 @@ function App() {
 
     canvas.toBlob(blob => {
       if (blob) {
-        // Increment captureCount to name files sequentially like 1.png, 2.png, ...
         const newCount = captureCount + 1;
         setCaptureCount(newCount);
-
         const capturedFile = new File([blob], `${newCount}.png`, { type: 'image/png' });
         setSelectedFiles(prev => [...prev, capturedFile]);
       }
@@ -92,18 +90,15 @@ function App() {
     setIsLoading(true);
     setError('');
     const formData = new FormData();
-
-    selectedFiles.forEach((file) => {
-      formData.append('files', file);
-    });
+    selectedFiles.forEach((file) => formData.append('files', file));
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/predict/', formData, {
+      const response = await axios.post(`${API_BASE_URL}/predict/`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setPredictionData(response.data.results);
     } catch (err) {
-      setError('Failed to get prediction. Is the backend server running?');
+      setError('Failed to get prediction. Please check backend connection.');
       console.error(err);
     } finally {
       setIsLoading(false);
@@ -122,7 +117,6 @@ function App() {
 
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-
     ctx.drawImage(canvas, 0, 0);
 
     const currentDate = new Date().toLocaleDateString();
@@ -163,7 +157,7 @@ function App() {
 
       <main>
         <div className="uploader-container">
-          {/* File upload */}
+          {/* File Upload */}
           <div className="file-upload-section">
             <input
               type="file"
@@ -178,58 +172,42 @@ function App() {
             )}
           </div>
 
-          {/* Camera toggle */}
-          {!cameraOpen && (
-            <button
-              onClick={() => setCameraOpen(true)}
-              style={{ marginTop: '20px', padding: '10px 20px', cursor: 'pointer' }}
-            >
+          {/* Camera Section */}
+          {!cameraOpen ? (
+            <button onClick={() => setCameraOpen(true)} className="camera-btn">
               📷 Open Camera
             </button>
-          )}
-
-          {/* Webcam preview and capture controls */}
-          {cameraOpen && (
-            <div className="webcam-section" style={{ marginTop: '20px' }}>
+          ) : (
+            <div className="webcam-section">
               <video
                 ref={videoRef}
                 autoPlay
                 playsInline
                 muted
-                style={{ width: '320px', height: '240px', borderRadius: '10px', border: '2px solid #90caf9' }}
+                style={{
+                  width: '320px',
+                  height: '240px',
+                  borderRadius: '10px',
+                  border: '2px solid #90caf9',
+                }}
               />
               <div style={{ marginTop: '10px' }}>
-                <button
-                  onClick={handleCapture}
-                  style={{ padding: '10px 20px', marginRight: '10px', cursor: 'pointer' }}
-                >
-                  📸 Capture Image
-                </button>
-                <button
-                  onClick={() => setCameraOpen(false)}
-                  style={{ padding: '10px 20px', cursor: 'pointer' }}
-                >
-                  ✖ Close Camera
-                </button>
+                <button onClick={handleCapture} className="capture-btn">📸 Capture Image</button>
+                <button onClick={() => setCameraOpen(false)} className="close-btn">✖ Close Camera</button>
               </div>
             </div>
           )}
 
-          {/* Show thumbnails + remove button */}
+          {/* Image Thumbnails */}
           {selectedFiles.length > 0 && (
-            <div
-              className={`selected-images ${selectedFiles.length > 8 ? 'shrink' : ''}`}
-              style={{
-                marginTop: '15px',
-                display: 'flex',
-                flexWrap: 'nowrap',
-                gap: '10px',
-                maxWidth: '100%',
-                overflowX: 'auto',
-                paddingBottom: '10px',
-                borderBottom: '1px solid #ddd'
-              }}
-            >
+            <div className="selected-images" style={{
+              marginTop: '15px',
+              display: 'flex',
+              gap: '10px',
+              overflowX: 'auto',
+              paddingBottom: '10px',
+              borderBottom: '1px solid #ddd'
+            }}>
               {selectedFiles.map((file, idx) => {
                 const url = URL.createObjectURL(file);
                 return (
@@ -238,33 +216,16 @@ function App() {
                       src={url}
                       alt={`selected ${idx}`}
                       style={{
-                        width: selectedFiles.length > 8 ? 50 : 80,
-                        height: selectedFiles.length > 8 ? 50 : 80,
+                        width: 80,
+                        height: 80,
                         objectFit: 'cover',
                         borderRadius: '6px',
-                        border: '1px solid #ccc',
-                        transition: 'width 0.3s ease, height 0.3s ease'
+                        border: '1px solid #ccc'
                       }}
                     />
                     <button
                       onClick={() => handleRemoveImage(idx)}
-                      style={{
-                        position: 'absolute',
-                        top: '-5px',
-                        right: '-5px',
-                        background: 'black',
-                        border: 'none',
-                        borderRadius: '50%',
-                        color: 'white',
-                        width: '20px',
-                        height: '20px',
-                        cursor: 'pointer',
-                        fontWeight: 'bold',
-                        lineHeight: '18px',
-                        padding: 0,
-                        userSelect: 'none',
-                      }}
-                      title="Remove image"
+                      className="remove-btn"
                     >
                       ×
                     </button>
@@ -274,8 +235,8 @@ function App() {
             </div>
           )}
 
-          {/* Location inputs */}
-          <div className="location-inputs" style={{ marginTop: '25px' }}>
+          {/* Location Inputs */}
+          <div className="location-inputs">
             <input
               type="text"
               placeholder="Start Location"
@@ -290,8 +251,12 @@ function App() {
             />
           </div>
 
-          {/* Predict button */}
-          <button onClick={handlePredictClick} disabled={isLoading} style={{ marginTop: '25px' }}>
+          {/* Predict Button */}
+          <button
+            onClick={handlePredictClick}
+            disabled={isLoading}
+            className="predict-btn"
+          >
             {isLoading ? 'Analyzing...' : 'Predict Severity'}
           </button>
         </div>
@@ -309,7 +274,7 @@ function App() {
               />
             </div>
 
-            <div style={{ textAlign: "center", marginTop: "55px", marginBottom: "30px" }}>
+            <div className="download-container">
               <button className="download-btn" onClick={handleDownloadGraph}>
                 ⬇️ Download Graph
               </button>
@@ -321,7 +286,7 @@ function App() {
       <footer className="App-footer">
         <p>© 2025 All Rights Reserved</p>
         <p>
-          Developed by <strong> Vishal </strong>under the guidance of <strong>Dr. Ramu Baadiga</strong>
+          Developed by <strong>Vishal</strong> under the guidance of <strong>Dr. Ramu Baadiga</strong>
         </p>
         <p>
           <FaEnvelope style={{ color: "white", marginRight: "5px" }} />
