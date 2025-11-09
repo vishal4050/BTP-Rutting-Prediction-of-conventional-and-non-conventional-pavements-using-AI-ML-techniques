@@ -26,7 +26,9 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
-# --- Model Loading ---
+# --- Model Loading (Lazy Loading Enabled) ---
+model = None  # <-- don't load model immediately
+
 def build_model():
     """
     Builds the model architecture to perfectly match the training script.
@@ -54,9 +56,15 @@ def build_model():
     model = tf.keras.Model(inputs=base_model.input, outputs=output)
     return model
 
-# Build and load the model
-model = build_model()
-model.load_weights('my_model.h5', by_name=True)
+def get_model():
+    """
+    Lazy-loads the model only once and reuses it.
+    """
+    global model
+    if model is None:
+        model = build_model()
+        model.load_weights('my_model.h5', by_name=True)
+    return model
 
 # Class labels (must match training)
 CLASS_NAMES = ['Moderate', 'Normal', 'Severe']
@@ -75,6 +83,7 @@ def preprocess_image(image_bytes: bytes):
 # --- Prediction Endpoint ---
 @app.post("/predict/")
 async def predict_rutting(files: List[UploadFile] = File(...)):
+    model = get_model()  # ✅ model loads here only once
     results = []
     image_batch = []
     filenames = []
