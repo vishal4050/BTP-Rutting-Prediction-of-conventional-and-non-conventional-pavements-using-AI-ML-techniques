@@ -31,19 +31,19 @@ It allows users to **upload or capture road images**, processes them through a t
 
 ### 1️⃣ Home Page
 Upload or capture images and enter location details.
-![Home Page](./assets/8610f4f5-5229-4d89-b28b-4be10150c0a6.png)
+![Home Page](c:\Users\91865\Pictures\Screenshots\Screenshot 2025-11-09 231725.png)
 
 ---
 
 ### 2️⃣ Image Upload Preview
 Displays all selected images before prediction.
-![Image Upload Preview](./assets/a0549877-e738-4d2e-90fa-9ebfabadd42b.png)
+![Image Upload Preview](c:\Users\91865\Pictures\Screenshots\Screenshot 2025-11-09 231757.png)
 
 ---
 
 ### 3️⃣ Prediction Results
 Rutting severity visualization (Normal - 🟩, Moderate - 🟨, Severe - 🟥)
-![Prediction Results](./assets/39dcd68e-3428-4002-800c-96bf6a59027d.png)
+![Prediction Results](c:\Users\91865\Pictures\Screenshots\Screenshot 2025-11-09 231848.png)
 
 ---
 
