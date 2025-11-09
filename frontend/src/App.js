@@ -20,7 +20,7 @@ function App() {
   const [captureCount, setCaptureCount] = useState(0);
 
   // API URL from .env or fallback
-  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://rutting-api3.onrender.com';
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://vishal-5-btp.hf.space';
 
   useEffect(() => {
     if (!cameraOpen) {
