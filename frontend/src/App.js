@@ -17,10 +17,9 @@ function App() {
   const videoRef = useRef(null);
   const [stream, setStream] = useState(null);
   const [cameraOpen, setCameraOpen] = useState(false);
-
-  // Sequential naming for captured images
   const [captureCount, setCaptureCount] = useState(0);
 
+  // API URL from .env or fallback
   const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://rutting-api3.onrender.com';
 
   useEffect(() => {
@@ -35,15 +34,16 @@ function App() {
     async function startCamera() {
       try {
         const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        if (videoRef.current) videoRef.current.srcObject = mediaStream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream;
+        }
         setStream(mediaStream);
       } catch (err) {
-        console.error("Error accessing webcam:", err);
+        console.error("Error accessing webcam: ", err);
         setError("Could not access the camera. Please check permissions.");
         setCameraOpen(false);
       }
     }
-
     startCamera();
 
     return () => {
@@ -159,12 +159,7 @@ function App() {
         <div className="uploader-container">
           {/* File Upload */}
           <div className="file-upload-section">
-            <input
-              type="file"
-              multiple
-              onChange={handleFileChange}
-              accept="image/*"
-            />
+            <input type="file" multiple onChange={handleFileChange} accept="image/*" />
             {selectedFiles.length > 0 && (
               <p style={{ marginTop: '8px', fontWeight: '500', color: '#333' }}>
                 {selectedFiles.length} image{selectedFiles.length > 1 ? 's' : ''} selected
@@ -173,12 +168,17 @@ function App() {
           </div>
 
           {/* Camera Section */}
-          {!cameraOpen ? (
-            <button onClick={() => setCameraOpen(true)} className="camera-btn">
+          {!cameraOpen && (
+            <button
+              onClick={() => setCameraOpen(true)}
+              style={{ marginTop: '20px', padding: '10px 20px', cursor: 'pointer' }}
+            >
               📷 Open Camera
             </button>
-          ) : (
-            <div className="webcam-section">
+          )}
+
+          {cameraOpen && (
+            <div className="webcam-section" style={{ marginTop: '20px' }}>
               <video
                 ref={videoRef}
                 autoPlay
@@ -192,22 +192,37 @@ function App() {
                 }}
               />
               <div style={{ marginTop: '10px' }}>
-                <button onClick={handleCapture} className="capture-btn">📸 Capture Image</button>
-                <button onClick={() => setCameraOpen(false)} className="close-btn">✖ Close Camera</button>
+                <button
+                  onClick={handleCapture}
+                  style={{ padding: '10px 20px', marginRight: '10px', cursor: 'pointer' }}
+                >
+                  📸 Capture Image
+                </button>
+                <button
+                  onClick={() => setCameraOpen(false)}
+                  style={{ padding: '10px 20px', cursor: 'pointer' }}
+                >
+                  ✖ Close Camera
+                </button>
               </div>
             </div>
           )}
 
-          {/* Image Thumbnails */}
+          {/* Thumbnails */}
           {selectedFiles.length > 0 && (
-            <div className="selected-images" style={{
-              marginTop: '15px',
-              display: 'flex',
-              gap: '10px',
-              overflowX: 'auto',
-              paddingBottom: '10px',
-              borderBottom: '1px solid #ddd'
-            }}>
+            <div
+              className={`selected-images ${selectedFiles.length > 8 ? 'shrink' : ''}`}
+              style={{
+                marginTop: '15px',
+                display: 'flex',
+                flexWrap: 'nowrap',
+                gap: '10px',
+                maxWidth: '100%',
+                overflowX: 'auto',
+                paddingBottom: '10px',
+                borderBottom: '1px solid #ddd',
+              }}
+            >
               {selectedFiles.map((file, idx) => {
                 const url = URL.createObjectURL(file);
                 return (
@@ -216,16 +231,33 @@ function App() {
                       src={url}
                       alt={`selected ${idx}`}
                       style={{
-                        width: 80,
-                        height: 80,
+                        width: selectedFiles.length > 8 ? 50 : 80,
+                        height: selectedFiles.length > 8 ? 50 : 80,
                         objectFit: 'cover',
                         borderRadius: '6px',
-                        border: '1px solid #ccc'
+                        border: '1px solid #ccc',
+                        transition: 'width 0.3s ease, height 0.3s ease',
                       }}
                     />
                     <button
                       onClick={() => handleRemoveImage(idx)}
-                      className="remove-btn"
+                      style={{
+                        position: 'absolute',
+                        top: '-5px',
+                        right: '-5px',
+                        background: 'black',
+                        border: 'none',
+                        borderRadius: '50%',
+                        color: 'white',
+                        width: '20px',
+                        height: '20px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        lineHeight: '18px',
+                        padding: 0,
+                        userSelect: 'none',
+                      }}
+                      title="Remove image"
                     >
                       ×
                     </button>
@@ -235,8 +267,8 @@ function App() {
             </div>
           )}
 
-          {/* Location Inputs */}
-          <div className="location-inputs">
+          {/* Locations */}
+          <div className="location-inputs" style={{ marginTop: '25px' }}>
             <input
               type="text"
               placeholder="Start Location"
@@ -252,11 +284,7 @@ function App() {
           </div>
 
           {/* Predict Button */}
-          <button
-            onClick={handlePredictClick}
-            disabled={isLoading}
-            className="predict-btn"
-          >
+          <button onClick={handlePredictClick} disabled={isLoading} style={{ marginTop: '25px' }}>
             {isLoading ? 'Analyzing...' : 'Predict Severity'}
           </button>
         </div>
@@ -267,14 +295,10 @@ function App() {
           <>
             <div className="results-container" ref={graphRef}>
               <h2>📊 Prediction Results</h2>
-              <ResultsGraph
-                data={predictionData}
-                startLocation={startLocation}
-                endLocation={endLocation}
-              />
+              <ResultsGraph data={predictionData} startLocation={startLocation} endLocation={endLocation} />
             </div>
 
-            <div className="download-container">
+            <div style={{ textAlign: "center", marginTop: "55px", marginBottom: "30px" }}>
               <button className="download-btn" onClick={handleDownloadGraph}>
                 ⬇️ Download Graph
               </button>
