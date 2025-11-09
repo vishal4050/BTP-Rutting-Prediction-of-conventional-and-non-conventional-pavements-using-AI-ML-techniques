@@ -12,27 +12,33 @@ import os
 # --- Load environment variables ---
 load_dotenv()
 
-# Initialize FastAPI
-app = FastAPI()
+# --- Optimize TensorFlow threading (important for low-memory environments) ---
+tf.config.threading.set_intra_op_parallelism_threads(1)
+tf.config.threading.set_inter_op_parallelism_threads(1)
 
-# --- CORS Configuration (Dynamic) ---
+# --- Initialize FastAPI ---
+app = FastAPI(title="Rutting Prediction API")
+
+# --- CORS Configuration ---
 frontend_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_url, "http://localhost:3000"],
+    allow_origins=[
+        frontend_url,
+        "http://localhost:3000",
+        "https://btp-frontend-ecru.vercel.app"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"]
 )
 
-# --- Model Loading (Lazy Loading Enabled) ---
-model = None  # <-- don't load model immediately
+# --- Lazy Model Loading ---
+model = None
 
 def build_model():
-    """
-    Builds the model architecture to perfectly match the training script.
-    """
+    """Build the model architecture to perfectly match the training setup."""
     input_tensor = tf.keras.layers.Input(shape=(224, 224, 3))
     base_model = tf.keras.applications.EfficientNetB0(
         include_top=False,
@@ -42,11 +48,7 @@ def build_model():
     )
 
     weights_url = "https://storage.googleapis.com/keras-applications/efficientnetb0_notop.h5"
-    weights_path = tf.keras.utils.get_file(
-        'efficientnetb0_notop.h5',
-        weights_url,
-        cache_subdir='models'
-    )
+    weights_path = tf.keras.utils.get_file('efficientnetb0_notop.h5', weights_url, cache_subdir='models')
     base_model.load_weights(weights_path)
 
     x = tf.keras.layers.GlobalAveragePooling2D(name="avg_pool")(base_model.output)
@@ -57,19 +59,18 @@ def build_model():
     return model
 
 def get_model():
-    """
-    Lazy-loads the model only once and reuses it.
-    """
+    """Lazy-loads the model only once."""
     global model
     if model is None:
         model = build_model()
-        model.load_weights('my_model.h5', by_name=True)
+        model_path = os.path.join(os.path.dirname(__file__), "my_model.h5")
+        model.load_weights(model_path, by_name=True)
     return model
 
-# Class labels (must match training)
+# --- Class Labels ---
 CLASS_NAMES = ['Moderate', 'Normal', 'Severe']
 
-# --- Image Preprocessing ---
+# --- Preprocess Image ---
 def preprocess_image(image_bytes: bytes):
     image = Image.open(io.BytesIO(image_bytes))
     if image.mode != 'RGB':
@@ -80,10 +81,15 @@ def preprocess_image(image_bytes: bytes):
     processed_image = preprocess_input(image_batch)
     return processed_image
 
+# --- Health Check Endpoint ---
+@app.get("/")
+def root():
+    return {"status": "ok", "message": "Rutting Prediction API is live 🚀"}
+
 # --- Prediction Endpoint ---
 @app.post("/predict/")
 async def predict_rutting(files: List[UploadFile] = File(...)):
-    model = get_model()  # ✅ model loads here only once
+    model = get_model()
     results = []
     image_batch = []
     filenames = []
@@ -110,7 +116,6 @@ async def predict_rutting(files: List[UploadFile] = File(...)):
     for i, prediction in enumerate(batch_prediction):
         predicted_class_index = np.argmax(prediction)
         predicted_class_name = CLASS_NAMES[predicted_class_index]
-
         results.append({
             'fileName': filenames[i],
             'predictedClass': predicted_class_name,
@@ -124,4 +129,8 @@ async def predict_rutting(files: List[UploadFile] = File(...)):
     return {"results": results}
 
 # --- Run Command ---
-# uvicorn main:app --host 0.0.0.0 --port 8000
+# uvicorn app:app --host 0.0.0.0 --port 7860
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app", host="0.0.0.0", port=int(os.getenv("PORT", 7860)))
+
