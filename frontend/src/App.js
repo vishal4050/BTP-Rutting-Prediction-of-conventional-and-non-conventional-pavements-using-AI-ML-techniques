@@ -22,6 +22,34 @@ function App() {
   // API URL from .env or fallback
   const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://vishal-5-btp.hf.space';
 
+  // --- NEW EFFECT 1: Auto-scroll to results ---
+  useEffect(() => {
+    if (predictionData && graphRef.current) {
+      graphRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [predictionData]); // Runs *after* predictionData is set
+
+  // --- NEW EFFECT 2: Clear stale results if all files are removed ---
+  useEffect(() => {
+    if (selectedFiles.length === 0) {
+      setPredictionData(null);
+      setError('');
+    }
+  }, [selectedFiles.length]); // Runs when the *number* of files changes
+
+  // --- NEW EFFECT 3 (from last time): Prevent thumbnail memory leaks ---
+  useEffect(() => {
+    // Create an array of object URLs for the thumbnails
+    const objectUrls = selectedFiles.map(file => URL.createObjectURL(file));
+
+    // This is a "cleanup function"
+    return () => {
+      // Revoke all the old URLs to free up memory
+      objectUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [selectedFiles]); // Runs when the selectedFiles array changes
+
+  // --- Your original camera effect ---
   useEffect(() => {
     if (!cameraOpen) {
       if (stream) {
@@ -46,17 +74,20 @@ function App() {
     }
     startCamera();
 
+    // Cleanup function for the camera stream
     return () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [cameraOpen]);
+  // We add 'stream' to the dependency array
+  }, [cameraOpen, stream]); 
 
   const handleFileChange = (event) => {
     const filesArray = Array.from(event.target.files);
     setSelectedFiles(filesArray);
-    setPredictionData(null);
+    // These lines are still good, they clear results on a *new* selection
+    setPredictionData(null); 
     setError('');
   };
 
@@ -143,6 +174,8 @@ function App() {
 
   const handleRemoveImage = (index) => {
     setSelectedFiles(files => files.filter((_, i) => i !== index));
+    // We don't need to clear prediction data here anymore,
+    // NEW EFFECT 2 (above) handles it automatically!
   };
 
   return (
@@ -224,7 +257,9 @@ function App() {
               }}
             >
               {selectedFiles.map((file, idx) => {
-                const url = URL.createObjectURL(file);
+                // We create the URL right here in the src prop.
+                // NEW EFFECT 3 (above) will handle cleaning this up.
+                const url = URL.createObjectURL(file); 
                 return (
                   <div key={idx} style={{ position: 'relative' }}>
                     <img
@@ -291,9 +326,10 @@ function App() {
 
         {error && <p className="error-message">{error}</p>}
 
+        {/* This ref is used by NEW EFFECT 1 for scrolling */}
         {predictionData && (
           <>
-            <div className="results-container" ref={graphRef}>
+            <div className="results-container" ref={graphRef}> 
               <h2>📊 Prediction Results</h2>
               <ResultsGraph data={predictionData} startLocation={startLocation} endLocation={endLocation} />
             </div>
