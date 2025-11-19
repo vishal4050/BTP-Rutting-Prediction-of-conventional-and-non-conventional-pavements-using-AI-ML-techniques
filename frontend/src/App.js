@@ -19,10 +19,9 @@ function App() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [captureCount, setCaptureCount] = useState(0);
 
-  // 🔥 NEW STATE — BACK CAMERA SWITCH
+  // Switch camera state
   const [useBackCamera, setUseBackCamera] = useState(false);
 
-  // API URL
   const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://vishal-5-btp.hf.space';
 
   useEffect(() => {
@@ -43,7 +42,7 @@ function App() {
     return () => objectUrls.forEach(url => URL.revokeObjectURL(url));
   }, [selectedFiles]);
 
-  // ✅ FIXED CAMERA EFFECT — stable + supports switching
+  // ✅ FIXED CAMERA EFFECT (SAFE + WORKS ON ALL DEVICES)
   useEffect(() => {
     if (!cameraOpen) {
       if (stream) {
@@ -55,11 +54,25 @@ function App() {
 
     async function startCamera() {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: useBackCamera ? { exact: "environment" } : "user"
-          }
-        });
+        // 1️⃣ Try requested camera
+        const constraints = {
+          video: { facingMode: useBackCamera ? "environment" : "user" }
+        };
+
+        let mediaStream;
+
+        try {
+          mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (err) {
+          console.warn("Requested camera failed, falling back:", err);
+
+          // 2️⃣ Fallback to front camera
+          mediaStream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: "user" }
+          });
+
+          setUseBackCamera(false);
+        }
 
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
@@ -68,8 +81,8 @@ function App() {
         setStream(mediaStream);
 
       } catch (err) {
-        console.error("Error accessing webcam: ", err);
-        setError("Could not access the camera. Please check permissions.");
+        console.error("Final camera error:", err);
+        setError("Could not access the camera.");
         setCameraOpen(false);
       }
     }
@@ -82,8 +95,7 @@ function App() {
       }
     };
 
-  // ❌ removed "stream" — prevents unstable restarting
-  }, [cameraOpen, useBackCamera]);
+  }, [cameraOpen, useBackCamera]);  // <- FIXED dependences
 
   const handleFileChange = (event) => {
     const filesArray = Array.from(event.target.files);
@@ -131,7 +143,6 @@ function App() {
       setPredictionData(response.data.results);
     } catch (err) {
       setError('Failed to get prediction. Please check backend connection.');
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
@@ -168,7 +179,7 @@ function App() {
     }
 
     const link = document.createElement('a');
-    link.download = `Rutting_Graph_${startLocation || 'Start'}_${endLocation || 'End'}_${currentDate}.png`;
+    link.download = `Rutting_Graph_${startLocation}_${endLocation}_${currentDate}.png`;
     link.href = exportCanvas.toDataURL('image/png');
     link.click();
   };
@@ -226,7 +237,6 @@ function App() {
               />
 
               <div style={{ marginTop: '10px' }}>
-
                 <button
                   onClick={handleCapture}
                   style={{ padding: '10px 20px', marginRight: '10px', cursor: 'pointer' }}
@@ -234,7 +244,7 @@ function App() {
                   📸 Capture Image
                 </button>
 
-                {/* 🔥 SWITCH CAMERA */}
+                {/* Switch Camera */}
                 <button
                   onClick={() => setUseBackCamera(prev => !prev)}
                   style={{ padding: '10px 20px', marginRight: '10px', cursor: 'pointer' }}
@@ -248,7 +258,6 @@ function App() {
                 >
                   ✖ Close Camera
                 </button>
-
               </div>
             </div>
           )}
@@ -309,7 +318,6 @@ function App() {
             </div>
           )}
 
-          {/* Locations */}
           <div className="location-inputs" style={{ marginTop: '25px' }}>
             <input
               type="text"
