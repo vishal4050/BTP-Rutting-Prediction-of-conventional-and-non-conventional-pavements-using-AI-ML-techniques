@@ -21,6 +21,9 @@ function App() {
 
   // Switch camera state
   const [useBackCamera, setUseBackCamera] = useState(false);
+  
+  // FIX: New state to hold available device IDs
+  const [availableCameras, setAvailableCameras] = useState([]); 
 
   const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://vishal-5-btp.hf.space';
 
@@ -42,7 +45,31 @@ function App() {
     return () => objectUrls.forEach(url => URL.revokeObjectURL(url));
   }, [selectedFiles]);
 
-  // ✅ FIXED CAMERA EFFECT (SAFE + WORKS ON ALL DEVICES)
+  // FIX 1: useEffect to enumerate and store all camera devices
+  useEffect(() => {
+    async function listCameras() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+        console.warn("Device enumeration not supported.");
+        return;
+      }
+      try {
+        // Request media access first (required by some browsers to show device labels)
+        const tempStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const videoDevices = devices.filter(device => device.kind === 'videoinput');
+        setAvailableCameras(videoDevices);
+        
+        // Stop the temporary stream
+        tempStream.getTracks().forEach(track => track.stop());
+      } catch (err) {
+        console.error("Error listing devices:", err);
+      }
+    }
+    listCameras();
+  }, []); // Run once on mount
+
+  // FIX 2: Refactored CAMERA EFFECT (Uses deviceId for reliable switching)
   useEffect(() => {
     if (!cameraOpen) {
       if (stream) {
@@ -53,26 +80,46 @@ function App() {
     }
 
     async function startCamera() {
+      // Clear previous stream if it exists
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
+      
       try {
-        // 1️⃣ Try requested camera
-        const constraints = {
-          video: { facingMode: useBackCamera ? "environment" : "user" }
-        };
-
-        let mediaStream;
-
-        try {
-          mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-        } catch (err) {
-          console.warn("Requested camera failed, falling back:", err);
-
-          // 2️⃣ Fallback to front camera
-          mediaStream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "user" }
-          });
-
-          setUseBackCamera(false);
+        let constraints = { video: true };
+        let targetDeviceId;
+        
+        // Logic to find the target camera's ID
+        if (availableCameras.length > 0) {
+          if (useBackCamera) {
+            // Prioritize camera explicitly labeled 'environment', 'back', or one not labeled 'front'/'user'
+            const backCamera = availableCameras.find(d => 
+              d.label.toLowerCase().includes('environment') || 
+              d.label.toLowerCase().includes('back')
+            ) || availableCameras.find(d => 
+              !d.label.toLowerCase().includes('front') && 
+              !d.label.toLowerCase().includes('user')
+            );
+            targetDeviceId = backCamera ? backCamera.deviceId : null;
+          } else {
+            // Prioritize camera explicitly labeled 'user', 'front', or the first one found
+            const frontCamera = availableCameras.find(d => 
+              d.label.toLowerCase().includes('user') || 
+              d.label.toLowerCase().includes('front')
+            );
+            targetDeviceId = frontCamera ? frontCamera.deviceId : availableCameras[0]?.deviceId;
+          }
         }
+
+        if (targetDeviceId) {
+          // Use deviceId: { exact: ... } for reliable selection
+          constraints = { video: { deviceId: { exact: targetDeviceId } } };
+        } else {
+          // Fallback to the original facingMode if device enumeration failed
+          constraints = { video: { facingMode: useBackCamera ? "environment" : "user" } };
+        }
+
+        let mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
 
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
@@ -81,8 +128,8 @@ function App() {
         setStream(mediaStream);
 
       } catch (err) {
-        console.error("Final camera error:", err);
-        setError("Could not access the camera.");
+        console.error("Camera access failed:", err);
+        setError("Could not access the camera. Error: " + err.name);
         setCameraOpen(false);
       }
     }
@@ -95,7 +142,7 @@ function App() {
       }
     };
 
-  }, [cameraOpen, useBackCamera]);  // <- FIXED dependences
+  }, [cameraOpen, useBackCamera, availableCameras]); // Added availableCameras to dependencies
 
   const handleFileChange = (event) => {
     const filesArray = Array.from(event.target.files);
