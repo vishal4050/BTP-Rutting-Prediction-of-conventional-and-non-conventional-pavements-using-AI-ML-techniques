@@ -43,7 +43,7 @@ function App() {
     return () => objectUrls.forEach(url => URL.revokeObjectURL(url));
   }, [selectedFiles]);
 
-  // 🔥 UPDATED CAMERA EFFECT WITH BACK CAMERA SUPPORT
+  // ✅ FIXED CAMERA EFFECT — stable + supports switching
   useEffect(() => {
     if (!cameraOpen) {
       if (stream) {
@@ -82,7 +82,8 @@ function App() {
       }
     };
 
-  }, [cameraOpen, stream, useBackCamera]); // 🔥 ADDED useBackCamera
+  // ❌ removed "stream" — prevents unstable restarting
+  }, [cameraOpen, useBackCamera]);
 
   const handleFileChange = (event) => {
     const filesArray = Array.from(event.target.files);
@@ -233,7 +234,7 @@ function App() {
                   📸 Capture Image
                 </button>
 
-                {/* 🔥 NEW SWITCH CAMERA BUTTON */}
+                {/* 🔥 SWITCH CAMERA */}
                 <button
                   onClick={() => setUseBackCamera(prev => !prev)}
                   style={{ padding: '10px 20px', marginRight: '10px', cursor: 'pointer' }}
