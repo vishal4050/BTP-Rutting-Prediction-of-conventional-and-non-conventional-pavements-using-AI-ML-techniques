@@ -19,37 +19,31 @@ function App() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [captureCount, setCaptureCount] = useState(0);
 
-  // API URL from .env or fallback
+  // 🔥 NEW STATE — BACK CAMERA SWITCH
+  const [useBackCamera, setUseBackCamera] = useState(false);
+
+  // API URL
   const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://vishal-5-btp.hf.space';
 
-  // --- NEW EFFECT 1: Auto-scroll to results ---
   useEffect(() => {
     if (predictionData && graphRef.current) {
       graphRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-  }, [predictionData]); // Runs *after* predictionData is set
+  }, [predictionData]);
 
-  // --- NEW EFFECT 2: Clear stale results if all files are removed ---
   useEffect(() => {
     if (selectedFiles.length === 0) {
       setPredictionData(null);
       setError('');
     }
-  }, [selectedFiles.length]); // Runs when the *number* of files changes
+  }, [selectedFiles.length]);
 
-  // --- NEW EFFECT 3 (from last time): Prevent thumbnail memory leaks ---
   useEffect(() => {
-    // Create an array of object URLs for the thumbnails
     const objectUrls = selectedFiles.map(file => URL.createObjectURL(file));
+    return () => objectUrls.forEach(url => URL.revokeObjectURL(url));
+  }, [selectedFiles]);
 
-    // This is a "cleanup function"
-    return () => {
-      // Revoke all the old URLs to free up memory
-      objectUrls.forEach(url => URL.revokeObjectURL(url));
-    };
-  }, [selectedFiles]); // Runs when the selectedFiles array changes
-
-  // --- Your original camera effect ---
+  // 🔥 UPDATED CAMERA EFFECT WITH BACK CAMERA SUPPORT
   useEffect(() => {
     if (!cameraOpen) {
       if (stream) {
@@ -61,33 +55,39 @@ function App() {
 
     async function startCamera() {
       try {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: useBackCamera ? { exact: "environment" } : "user"
+          }
+        });
+
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
         }
+
         setStream(mediaStream);
+
       } catch (err) {
         console.error("Error accessing webcam: ", err);
         setError("Could not access the camera. Please check permissions.");
         setCameraOpen(false);
       }
     }
+
     startCamera();
 
-    // Cleanup function for the camera stream
     return () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  // We add 'stream' to the dependency array
-  }, [cameraOpen, stream]); 
+
+  }, [cameraOpen, stream, useBackCamera]); // 🔥 ADDED useBackCamera
 
   const handleFileChange = (event) => {
     const filesArray = Array.from(event.target.files);
     setSelectedFiles(filesArray);
-    // These lines are still good, they clear results on a *new* selection
-    setPredictionData(null); 
+    setPredictionData(null);
     setError('');
   };
 
@@ -174,8 +174,6 @@ function App() {
 
   const handleRemoveImage = (index) => {
     setSelectedFiles(files => files.filter((_, i) => i !== index));
-    // We don't need to clear prediction data here anymore,
-    // NEW EFFECT 2 (above) handles it automatically!
   };
 
   return (
@@ -190,6 +188,7 @@ function App() {
 
       <main>
         <div className="uploader-container">
+
           {/* File Upload */}
           <div className="file-upload-section">
             <input type="file" multiple onChange={handleFileChange} accept="image/*" />
@@ -224,19 +223,31 @@ function App() {
                   border: '2px solid #90caf9',
                 }}
               />
+
               <div style={{ marginTop: '10px' }}>
+
                 <button
                   onClick={handleCapture}
                   style={{ padding: '10px 20px', marginRight: '10px', cursor: 'pointer' }}
                 >
                   📸 Capture Image
                 </button>
+
+                {/* 🔥 NEW SWITCH CAMERA BUTTON */}
+                <button
+                  onClick={() => setUseBackCamera(prev => !prev)}
+                  style={{ padding: '10px 20px', marginRight: '10px', cursor: 'pointer' }}
+                >
+                  🔄 Switch Camera
+                </button>
+
                 <button
                   onClick={() => setCameraOpen(false)}
                   style={{ padding: '10px 20px', cursor: 'pointer' }}
                 >
                   ✖ Close Camera
                 </button>
+
               </div>
             </div>
           )}
@@ -257,9 +268,7 @@ function App() {
               }}
             >
               {selectedFiles.map((file, idx) => {
-                // We create the URL right here in the src prop.
-                // NEW EFFECT 3 (above) will handle cleaning this up.
-                const url = URL.createObjectURL(file); 
+                const url = URL.createObjectURL(file);
                 return (
                   <div key={idx} style={{ position: 'relative' }}>
                     <img
@@ -271,7 +280,6 @@ function App() {
                         objectFit: 'cover',
                         borderRadius: '6px',
                         border: '1px solid #ccc',
-                        transition: 'width 0.3s ease, height 0.3s ease',
                       }}
                     />
                     <button
@@ -290,9 +298,7 @@ function App() {
                         fontWeight: 'bold',
                         lineHeight: '18px',
                         padding: 0,
-                        userSelect: 'none',
                       }}
-                      title="Remove image"
                     >
                       ×
                     </button>
@@ -318,7 +324,6 @@ function App() {
             />
           </div>
 
-          {/* Predict Button */}
           <button onClick={handlePredictClick} disabled={isLoading} style={{ marginTop: '25px' }}>
             {isLoading ? 'Analyzing...' : 'Predict Severity'}
           </button>
@@ -326,10 +331,9 @@ function App() {
 
         {error && <p className="error-message">{error}</p>}
 
-        {/* This ref is used by NEW EFFECT 1 for scrolling */}
         {predictionData && (
           <>
-            <div className="results-container" ref={graphRef}> 
+            <div className="results-container" ref={graphRef}>
               <h2>📊 Prediction Results</h2>
               <ResultsGraph data={predictionData} startLocation={startLocation} endLocation={endLocation} />
             </div>
